@@ -16,7 +16,6 @@ export default function Navigation() {
       <Link to="/" style={pillStyleButton}>Home</Link>
       <Link to="/dashboard" style={pillStyleButton}>Dashboard</Link>
       <Link to="/admin" style={pillStyleButton}>Admin</Link>
-      <Link to="/auth" style={pillStyleButton}>Login</Link>
     </nav>
   );
 }
