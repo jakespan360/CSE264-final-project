@@ -1,5 +1,16 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Defining these outside the generatePlaylistFromMood() function so they aren't remade
+// on every run.
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({
+  model: "gemini-3-flash-preview",
+  generationConfig: {
+    responseMimeType: "application/json"
+  }
+});
+
+// May be useful to modify this a bit later
 export const buildGeminiPrompt = (userMood) => {
   return `
     You are an expert music curator and DJ. 
@@ -25,21 +36,14 @@ export const buildGeminiPrompt = (userMood) => {
 
 export const generatePlaylistFromMood = async (userMood) => {
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
-
     const prompt = buildGeminiPrompt(userMood);
     const result = await model.generateContent(prompt);
     
-    //extract text response
-    let responseText = result.response.text();
+    /* Extract text response. No need to format since we explicitly define the
+    response as "application/json". */
+    const responseText = result.response.text();
     
-    //clean up formatting
-    responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    //create playlist object to be passed along to spotify GET requests
-    const playlist = JSON.parse(responseText);
-    
-    return playlist;
+    return JSON.parse(responseText);
   } catch (error) {
     console.error("Error calling Gemini API:", error);
     throw new Error("Failed to generate playlist from Gemini");
