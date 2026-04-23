@@ -1,12 +1,24 @@
-// Make sure this points to your Express server's port
+import { supabase } from '../supabase.js';
+
+//Backend API service functions for Spotify-related operations
 const BASE_URL = 'http://localhost:3000';
+
+const getHeaders = async (isJson = false) => {
+  const { data: { session } } = await supabase.auth.getSession();
+  const providerToken = session?.provider_token;
+  const headers = {};
+  if (isJson) headers['Content-Type'] = 'application/json';
+  if (providerToken) headers['Authorization'] = `Bearer ${providerToken}`;
+  return headers;
+};
 
 /**
  * Checks if the current user is authenticated with Spotify.
  * @returns {Promise<boolean>} True if authenticated, false otherwise.
  */
 export async function getAuthStatus() {
-  const res = await fetch(`${BASE_URL}/auth/status`);
+  const headers = await getHeaders();
+  const res = await fetch(`${BASE_URL}/auth/status`, { headers });
   const data = await res.json();
   return data.isAuthenticated;
 }
@@ -16,7 +28,8 @@ export async function getAuthStatus() {
  * @returns {Promise<void>}
  */
 export async function logout() {
-  await fetch(`${BASE_URL}/auth/logout`, { method: 'POST' });
+  const headers = await getHeaders();
+  await fetch(`${BASE_URL}/auth/logout`, { method: 'POST', headers });
 }
 
 /**
@@ -25,7 +38,9 @@ export async function logout() {
  * @throws {Error} If the request fails.
  */
 export async function getSpotifyUser() {
-  const res = await fetch(`${BASE_URL}/spotify/me`);
+  const res = await fetch(`${BASE_URL}/spotify/me`, {
+    headers: await getHeaders()
+  });
   if (!res.ok) throw new Error('Failed to fetch user');
   return res.json();
 }
@@ -38,7 +53,9 @@ export async function getSpotifyUser() {
 export async function searchTrack(query) {
   const encodedQuery = encodeURIComponent(query);
   try {
-    const res = await fetch(`${BASE_URL}/spotify/search?q=${encodedQuery}&type=track&limit=1`);
+    const res = await fetch(`${BASE_URL}/spotify/search?q=${encodedQuery}&type=track&limit=1`, {
+      headers: await getHeaders()
+    });
     const data = await res.json();
     return data.tracks?.items?.[0]?.uri || null;
   } catch (e) {
@@ -49,16 +66,15 @@ export async function searchTrack(query) {
 
 /**
  * Creates a new public playlist on the user's Spotify account.
- * @param {string} userId - The Spotify user ID.
  * @param {string} name - The name of the new playlist.
  * @param {string} description - The description of the new playlist.
  * @returns {Promise<string>} The newly created playlist's ID.
  * @throws {Error} If the playlist creation fails.
  */
-export async function createPlaylist(userId, name, description) {
+export async function createPlaylist(name, description) {
   const res = await fetch(`${BASE_URL}/spotify/me/playlists`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await getHeaders(true),
     body: JSON.stringify({ name, description, public: true }),
   });
   
@@ -82,10 +98,12 @@ export async function addTracksToPlaylist(playlistId, trackUris) {
     chunks.push(trackUris.slice(i, i + 100));
   }
 
+  const headers = await getHeaders(true);
+
   for (const chunk of chunks) {
     const res = await fetch(`${BASE_URL}/spotify/playlists/${playlistId}/items`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: headers,
       body: JSON.stringify({ uris: chunk }),
     });
     
@@ -95,4 +113,22 @@ export async function addTracksToPlaylist(playlistId, trackUris) {
       throw new Error(`Failed to add tracks: ${errorData.error?.message || res.statusText}`);
     }
   }
+}
+
+/**
+ * Generates a playlist based on a given mood.
+ * @param {string} mood - The mood to generate the playlist for.
+ * @returns {Promise<string>} The generated playlist's ID.
+ * @throws {Error} If the playlist generation fails.
+ */
+export async function generatePlaylist(mood) {
+  const headers = await getHeaders(true);
+  const res = await fetch(`${BASE_URL}/api/playlists/generate`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ mood }),
+  });
+  if (!res.ok) throw new Error('Failed to generate playlist');
+  const data = await res.json();
+  return data.playlist;
 }

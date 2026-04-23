@@ -1,64 +1,111 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../supabase';
+import { generatePlaylist } from '../services/spotify';
 
 export default function Dashboard() {
+  const [session, setSession] = useState(null);
   const [mood, setMood] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [playlist, setPlaylist] = useState([]);
+  const [error, setError] = useState('');
 
-  const handleGenerate = (e) => {
+  // Listen for Supabase auth changes
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'spotify',
+      options: {
+        scopes: 'user-read-email user-read-private playlist-modify-public playlist-modify-private',
+      },
+    });
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const handleGenerate = async (e) => {
     e.preventDefault();
     if (!mood.trim()) return;
 
     setIsGenerating(true);
+    setError('');
+    setPlaylist([]);
 
-    // Simulate an API call to Gemini and Spotify
-    setTimeout(() => {
-      setPlaylist([
-        { id: 1, title: 'Cruel Summer', artist: 'Taylor Swift' },
-        { id: 2, title: 'Good Days', artist: 'SZA' },
-        { id: 3, title: 'Levitating', artist: 'Dua Lipa' },
-      ]);
+    try {
+      const generated = await generatePlaylist(mood);
+      setPlaylist(generated);
+    } catch (err) {
+      setError('Could not generate playlist. Try again.');
+    } finally {
       setIsGenerating(false);
-    }, 1500);
+    }
   };
 
   return (
-    <div>
+    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <h2>Playlist Generator</h2>
-      <p>Enter how you are feeling, or describe the vibe you want for your playlist.</p>
       
-      <form onSubmit={handleGenerate} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-        <input 
-          type="text" 
-          placeholder="e.g., Late night drive, Happy, Melancholy..." 
-          value={mood} 
-          onChange={(e) => setMood(e.target.value)} 
-          style={{ flex: 1, padding: '0.5rem', fontSize: '1rem' }}
-          disabled={isGenerating}
-        />
-        <button 
-          type="submit" 
-          disabled={isGenerating || !mood.trim()}
-          style={{ padding: '0.5rem 1rem', fontSize: '1rem', cursor: 'pointer' }}
-        >
-          {isGenerating ? 'Generating...' : 'Generate'}
-        </button>
-      </form>
-
-      {playlist.length > 0 && (
-        <div style={{ border: '1px solid #ccc', padding: '1rem', borderRadius: '8px' }}>
-          <h3>Generated Tracks</h3>
-          <ul style={{ listStyleType: 'none', padding: 0 }}>
-            {playlist.map((track) => (
-              <li key={track.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
-                <strong>{track.title}</strong> - {track.artist}
-              </li>
-            ))}
-          </ul>
-          
-          <button style={{ marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: '#1DB954', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            Save Playlist to Spotify
+      {/* Spotify Connection Area - Centered above generator */}
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        {!session ? (
+          <>
+            <p style={{ marginBottom: '1rem' }}>You need to connect your Spotify account to generate and save playlists.</p>
+            <button onClick={handleLogin}>Connect Spotify</button>
+          </>
+        ) : (
+          <button 
+            onClick={handleLogout} 
+            style={{ backgroundColor: 'var(--surface-color)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '8px 16px', fontSize: '0.9rem' }}>
+            Disconnect Spotify
           </button>
+        )}
+      </div>
+
+      {/* Generator Area - Only shows when connected */}
+      {session && (
+        <div style={{ width: '100%', maxWidth: '500px' }}>
+          <p style={{ textAlign: 'center' }}>Describe your mood and get songs.</p>
+
+          <form onSubmit={handleGenerate} className="form-group" style={{ alignItems: 'center' }}>
+            <input
+              type="text"
+              value={mood}
+              onChange={(e) => setMood(e.target.value)}
+              placeholder="e.g., chill night drive"
+              disabled={isGenerating}
+              style={{ textAlign: 'center' }}
+            />
+            {/* Generate Button centered below input */}
+            <button type="submit" disabled={isGenerating || !mood.trim()} style={{ marginTop: '0.5rem',alignItems: 'center'  }}>
+              {isGenerating ? 'Generating...' : 'Generate'}
+            </button>
+          </form>
+
+          {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+
+          {playlist.length > 0 && (
+            <div style={{ marginTop: '2rem' }}>
+              <ul>
+                {playlist.map((track, i) => (
+                  <li key={`${track.title}-${track.artist}-${i}`}>
+                    <strong>{track.title}</strong> by {track.artist}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </div>
