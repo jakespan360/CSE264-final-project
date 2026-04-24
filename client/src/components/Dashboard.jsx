@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { generatePlaylist } from '../services/spotify';
+import PlayListDisplay from './PlaylistDisplay';
 
 export default function Dashboard() {
   const [session, setSession] = useState(null);
@@ -56,7 +57,7 @@ export default function Dashboard() {
   return (
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <h2>Playlist Generator</h2>
-      
+
       {/* Spotify Connection Area - Centered above generator */}
       <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
         {!session ? (
@@ -65,8 +66,8 @@ export default function Dashboard() {
             <button onClick={handleLogin}>Connect Spotify</button>
           </>
         ) : (
-          <button 
-            onClick={handleLogout} 
+          <button
+            onClick={handleLogout}
             style={{ backgroundColor: 'var(--surface-color)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '8px 16px', fontSize: '0.9rem' }}>
             Disconnect Spotify
           </button>
@@ -88,7 +89,7 @@ export default function Dashboard() {
               style={{ textAlign: 'center' }}
             />
             {/* Generate Button centered below input */}
-            <button type="submit" disabled={isGenerating || !mood.trim()} style={{ marginTop: '0.5rem',alignItems: 'center'  }}>
+            <button type="submit" disabled={isGenerating || !mood.trim()} style={{ marginTop: '0.5rem', alignItems: 'center' }}>
               {isGenerating ? 'Generating...' : 'Generate'}
             </button>
           </form>
@@ -96,15 +97,7 @@ export default function Dashboard() {
           {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
           {playlist.length > 0 && (
-            <div style={{ marginTop: '2rem' }}>
-              <ul>
-                {playlist.map((track, i) => (
-                  <li key={`${track.title}-${track.artist}-${i}`}>
-                    <strong>{track.title}</strong> by {track.artist}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <PlayListDisplay tracks={playlist} />
           )}
         </div>
       )}

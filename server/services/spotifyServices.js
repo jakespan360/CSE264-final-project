@@ -1,15 +1,27 @@
 const SPOTIFY_API_BASE = "https://api.spotify.com/v1";
 
 export async function searchTrack(query, accessToken) {
-  const res = await fetch(
-    `${SPOTIFY_API_BASE}/search?q=${encodeURIComponent(query)}&type=track&limit=1`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    },
-  );
-  if (!res.ok) throw new Error("Search failed");
+  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`;
+
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  
   const data = await res.json();
-  return data.tracks.items[0] || null;
+  const track = data.tracks?.items[0];
+
+  if (track) {
+    return {
+      id: track.id,
+      title: track.name,
+      artist: track.artists[0].name,
+      // GRAB THE IMAGE HERE
+      imageUrl: track.album.images[0]?.url, 
+      uri: track.uri,
+      external_urls: track.external_urls
+    };
+  }
+  return null;
 }
 
 export async function getSpotifyProfile(accessToken) {

@@ -21,7 +21,7 @@ router.post('/generate', async (req, res) => {
     const enrichedTracks = [];
     for (const song of rawSongs) {
       const trackData = await searchTrack(`${song.title} ${song.artist}`, token);
-      if (trackData) enrichedTracks.push({ ...song, uri: trackData.uri, spotifyUrl: trackData.external_urls.spotify });
+      if (trackData) enrichedTracks.push({ ...song, uri: trackData.uri, imageUrl: trackData.imageUrl, spotifyUrl: trackData.external_urls.spotify });
     }
     
     res.json({ playlist: enrichedTracks });
