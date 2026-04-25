@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { generatePlaylist } from '../services/spotify';
+import { generatePlaylist, savePlaylist } from '../services/spotify';
 import PlayListDisplay from './PlaylistDisplay';
 
 export default function Dashboard() {
@@ -70,7 +70,7 @@ export default function Dashboard() {
 
     try {
       const name = playlistName.trim() || `${mood} playlist`;
-      const url = await savePlaylist(name, uris);
+      const url = await savePlaylist(name, uris, mood, playlist);
       setSavedUrl(url);
     } catch (err) {
       setSaveError('Could not save playlist. Try again.');
@@ -113,16 +113,40 @@ export default function Dashboard() {
               disabled={isGenerating}
               style={{ textAlign: 'center' }}
             />
-            {/* Generate Button centered below input */}
-            <button type="submit" disabled={isGenerating || !mood.trim()} style={{ marginTop: '0.5rem', alignItems: 'center' }}>
+            <button type="submit" disabled={isGenerating || !mood.trim()} style={{ marginTop: '0.5rem' }}>
               {isGenerating ? 'Generating...' : 'Generate'}
             </button>
           </form>
 
           {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
+          {/* FIX: Wrapped sibling elements in a Fragment <> </> */}
           {playlist.length > 0 && (
-            <PlayListDisplay tracks={playlist} />
+            <>
+              <PlayListDisplay tracks={playlist} />
+
+              <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                <input
+                  type="text"
+                  value={playlistName}
+                  onChange={(e) => setPlaylistName(e.target.value)}
+                  placeholder={`${mood} playlist`}
+                  disabled={isSaving}
+                  style={{ textAlign: 'center' }}
+                />
+                <button onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Save to Spotify'}
+                </button>
+
+                {saveError && <p style={{ color: 'red' }}>{saveError}</p>}
+                {savedUrl && (
+                  <p>
+                    Playlist saved!{' '}
+                    <a href={savedUrl} target="_blank" rel="noreferrer">Open in Spotify</a>
+                  </p>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}
