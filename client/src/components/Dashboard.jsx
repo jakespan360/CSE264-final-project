@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { generatePlaylist } from '../services/spotify';
+import { generatePlaylist, savePlaylist } from '../services/spotify';
 
 export default function Dashboard() {
   const [session, setSession] = useState(null);
@@ -8,6 +8,10 @@ export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [playlist, setPlaylist] = useState([]);
   const [error, setError] = useState('');
+  const [playlistName, setPlaylistName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [savedUrl, setSavedUrl] = useState('');
 
   // Listen for Supabase auth changes
   useEffect(() => {
@@ -42,6 +46,8 @@ export default function Dashboard() {
     setIsGenerating(true);
     setError('');
     setPlaylist([]);
+    setSavedUrl('');
+    setSaveError('');
 
     try {
       const generated = await generatePlaylist(mood);
@@ -50,6 +56,25 @@ export default function Dashboard() {
       setError('Could not generate playlist. Try again.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleSave = async () => {
+    const uris = playlist.map((t) => t.uri).filter(Boolean);
+    if (!uris.length) return;
+
+    setIsSaving(true);
+    setSaveError('');
+    setSavedUrl('');
+
+    try {
+      const name = playlistName.trim() || `${mood} playlist`;
+      const url = await savePlaylist(name, uris);
+      setSavedUrl(url);
+    } catch (err) {
+      setSaveError('Could not save playlist. Try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -104,6 +129,27 @@ export default function Dashboard() {
                   </li>
                 ))}
               </ul>
+
+              <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                <input
+                  type="text"
+                  value={playlistName}
+                  onChange={(e) => setPlaylistName(e.target.value)}
+                  placeholder={`${mood} playlist`}
+                  disabled={isSaving}
+                  style={{ textAlign: 'center' }}
+                />
+                <button onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Save to Spotify'}
+                </button>
+                {saveError && <p style={{ color: 'red' }}>{saveError}</p>}
+                {savedUrl && (
+                  <p>
+                    Playlist saved!{' '}
+                    <a href={savedUrl} target="_blank" rel="noreferrer">Open in Spotify</a>
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </div>

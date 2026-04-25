@@ -116,6 +116,25 @@ export async function addTracksToPlaylist(playlistId, trackUris) {
 }
 
 /**
+ * Saves a generated playlist to the user's Spotify account.
+ * @param {string} name - The playlist name.
+ * @param {string[]} uris - Array of Spotify track URIs to add.
+ * @returns {Promise<string>} The Spotify URL of the created playlist.
+ * @throws {Error} If saving fails.
+ */
+export async function savePlaylist(name, uris) {
+  const headers = await getHeaders(true);
+  const res = await fetch(`${BASE_URL}/api/playlists/save`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ name, uris }),
+  });
+  if (!res.ok) throw new Error('Failed to save playlist to Spotify');
+  const data = await res.json();
+  return data.url;
+}
+
+/**
  * Generates a playlist based on a given mood.
  * @param {string} mood - The mood to generate the playlist for.
  * @returns {Promise<string>} The generated playlist's ID.
