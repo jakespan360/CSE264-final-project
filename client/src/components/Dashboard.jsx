@@ -9,6 +9,10 @@ export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [playlist, setPlaylist] = useState([]);
   const [error, setError] = useState('');
+  const [playlistName, setPlaylistName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [savedUrl, setSavedUrl] = useState('');
 
   // Listen for Supabase auth changes
   useEffect(() => {
@@ -43,6 +47,8 @@ export default function Dashboard() {
     setIsGenerating(true);
     setError('');
     setPlaylist([]);
+    setSavedUrl('');
+    setSaveError('');
 
     try {
       const generated = await generatePlaylist(mood);
@@ -51,6 +57,25 @@ export default function Dashboard() {
       setError('Could not generate playlist. Try again.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleSave = async () => {
+    const uris = playlist.map((t) => t.uri).filter(Boolean);
+    if (!uris.length) return;
+
+    setIsSaving(true);
+    setSaveError('');
+    setSavedUrl('');
+
+    try {
+      const name = playlistName.trim() || `${mood} playlist`;
+      const url = await savePlaylist(name, uris);
+      setSavedUrl(url);
+    } catch (err) {
+      setSaveError('Could not save playlist. Try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
