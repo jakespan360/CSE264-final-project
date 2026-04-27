@@ -37,25 +37,31 @@ router.post('/save', async (req, res) => {
     const token = getToken(req);
     if (!token) return res.status(401).json({ error: 'Not authenticated' });
 
-    const { name, mood, tracks, uris } = req.body;
+    const { name, uris, position } = req.body;
 
-    const user = await getSpotifyProfile(token);
-    const playlist = await createPlaylist(user.id, name || 'Mood Playlist', token);
-    await addTracksToPlaylist(playlist.id, uris, token);
+    if (!Array.isArray(uris) || uris.length === 0) {
+      return res.status(400).json({ error: 'uris must be a non-empty array' });
+    }
 
-    await savePlaylist({
-      spotifyUserId: user.id,
-      playlistName: name || 'Mood Playlist',
-      spotifyPlaylistId: playlist.id,
-      spotifyPlaylistUrl: playlist.external_urls.spotify,
-      mood: mood || '',
-      songs: tracks || [],
+    const cleanedUris = uris.filter((u) => typeof u === 'string' && u.startsWith('spotify:'));
+    if (cleanedUris.length === 0) {
+      return res.status(400).json({ error: 'No valid Spotify URIs provided' });
+    }
+
+    const playlist = await createPlaylist(null, name || 'Mood Playlist', token);
+    const addResult = await addTracksToPlaylist(playlist.id, cleanedUris, token, position);
+
+    res.status(201).json({
+      playlistId: playlist.id,
+      url: playlist.external_urls?.spotify,
+      ...addResult,
     });
-
-    res.json({ url: playlist.external_urls.spotify });
   } catch (error) {
-    console.error('Save error:', error);
-    res.status(500).json({ error: 'Failed to save to Spotify' });
+    console.error('[POST /api/playlists/save]', error?.status, error?.message, error?.details);
+    res.status(error.status || 500).json({
+      error: error.message || 'Failed to save to Spotify',
+      details: error.details || null,
+    });
   }
 });
 
