@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { generatePlaylist, savePlaylist } from '../services/spotify';
-import PlayListDisplay from './PlaylistDisplay';
+import { generatePlaylist, saveGeneratedPlaylist } from '../services/spotify';
+import PlaylistDisplay from './PlaylistDisplay';
 
 export default function Dashboard() {
   const [session, setSession] = useState(null);
@@ -9,10 +9,15 @@ export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [playlist, setPlaylist] = useState([]);
   const [error, setError] = useState('');
-  const [playlistName, setPlaylistName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
-  const [savedUrl, setSavedUrl] = useState('');
+  const [saveMessage, setSaveMessage] = useState('');
+
+  const displayName =
+    session?.user?.user_metadata?.full_name ||
+    session?.user?.user_metadata?.name ||
+    session?.user?.user_metadata?.preferred_username ||
+    session?.user?.email ||
+    'Spotify user';
 
   // Listen for Supabase auth changes
   useEffect(() => {
@@ -32,6 +37,8 @@ export default function Dashboard() {
       provider: 'spotify',
       options: {
         scopes: 'user-read-email user-read-private playlist-modify-public playlist-modify-private',
+        queryParams: { show_dialog: 'true' },
+        redirectTo: `${window.location.origin}/dashboard`,
       },
     });
   };
@@ -61,19 +68,16 @@ export default function Dashboard() {
   };
 
   const handleSave = async () => {
-    const uris = playlist.map((t) => t.uri).filter(Boolean);
-    if (!uris.length) return;
-
+    if (!playlist.length) return;
     setIsSaving(true);
-    setSaveError('');
-    setSavedUrl('');
+    setError('');
+    setSaveMessage('');
 
     try {
-      const name = playlistName.trim() || `${mood} playlist`;
-      const url = await savePlaylist(name, uris, mood, playlist);
-      setSavedUrl(url);
+      const result = await saveGeneratedPlaylist(`Mood Playlist - ${mood}`, playlist);
+      setSaveMessage(`Saved! Open: ${result.url}`);
     } catch (err) {
-      setSaveError('Could not save playlist. Try again.');
+      setError(err.message || 'Could not save playlist.');
     } finally {
       setIsSaving(false);
     }
@@ -83,7 +87,6 @@ export default function Dashboard() {
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <h2>Playlist Generator</h2>
 
-      {/* Spotify Connection Area - Centered above generator */}
       <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
         {!session ? (
           <>
@@ -91,11 +94,16 @@ export default function Dashboard() {
             <button onClick={handleLogin}>Connect Spotify</button>
           </>
         ) : (
-          <button
-            onClick={handleLogout}
-            style={{ backgroundColor: 'var(--surface-color)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '8px 16px', fontSize: '0.9rem' }}>
-            Disconnect Spotify
-          </button>
+          <>
+            <p style={{ marginBottom: '0.75rem' }}>
+              Connected as <strong>{displayName}</strong>
+            </p>
+            <button
+              onClick={handleLogout}
+              style={{ backgroundColor: 'var(--surface-color)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '8px 16px', fontSize: '0.9rem' }}>
+              Disconnect Spotify
+            </button>
+          </>
         )}
       </div>
 
@@ -113,7 +121,7 @@ export default function Dashboard() {
               disabled={isGenerating}
               style={{ textAlign: 'center' }}
             />
-            <button type="submit" disabled={isGenerating || !mood.trim()} style={{ marginTop: '0.5rem' }}>
+            <button type="submit" disabled={isGenerating || !mood.trim()} style={{ marginTop: '0.5rem', alignItems: 'center' }}>
               {isGenerating ? 'Generating...' : 'Generate'}
             </button>
           </form>
@@ -122,31 +130,18 @@ export default function Dashboard() {
 
           {/* FIX: Wrapped sibling elements in a Fragment <> </> */}
           {playlist.length > 0 && (
-            <>
-              <PlayListDisplay tracks={playlist} />
+            <div style={{ marginTop: '2rem' }}>
+              <PlaylistDisplay tracks={playlist} />
 
-              <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-                <input
-                  type="text"
-                  value={playlistName}
-                  onChange={(e) => setPlaylistName(e.target.value)}
-                  placeholder={`${mood} playlist`}
-                  disabled={isSaving}
-                  style={{ textAlign: 'center' }}
-                />
+              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
                 <button onClick={handleSave} disabled={isSaving}>
                   {isSaving ? 'Saving...' : 'Save to Spotify'}
                 </button>
-
-                {saveError && <p style={{ color: 'red' }}>{saveError}</p>}
-                {savedUrl && (
-                  <p>
-                    Playlist saved!{' '}
-                    <a href={savedUrl} target="_blank" rel="noreferrer">Open in Spotify</a>
-                  </p>
+                {saveMessage && (
+                  <p style={{ marginTop: '0.75rem', wordBreak: 'break-word' }}>{saveMessage}</p>
                 )}
               </div>
-            </>
+            </div>
           )}
         </div>
       )}
