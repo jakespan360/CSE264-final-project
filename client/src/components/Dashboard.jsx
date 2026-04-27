@@ -12,6 +12,13 @@ export default function Dashboard() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
+  const displayName =
+    session?.user?.user_metadata?.full_name ||
+    session?.user?.user_metadata?.name ||
+    session?.user?.user_metadata?.preferred_username ||
+    session?.user?.email ||
+    'Spotify user';
+
   // Listen for Supabase auth changes
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -31,6 +38,7 @@ export default function Dashboard() {
       options: {
         scopes: 'user-read-email user-read-private playlist-modify-public playlist-modify-private',
         queryParams: { show_dialog: 'true' },
+        redirectTo: `${window.location.origin}/dashboard`,
       },
     });
   };
@@ -77,7 +85,6 @@ export default function Dashboard() {
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <h2>Playlist Generator</h2>
 
-      {/* Spotify Connection Area - Centered above generator */}
       <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
         {!session ? (
           <>
@@ -85,11 +92,16 @@ export default function Dashboard() {
             <button onClick={handleLogin}>Connect Spotify</button>
           </>
         ) : (
-          <button
-            onClick={handleLogout}
-            style={{ backgroundColor: 'var(--surface-color)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '8px 16px', fontSize: '0.9rem' }}>
-            Disconnect Spotify
-          </button>
+          <>
+            <p style={{ marginBottom: '0.75rem' }}>
+              Connected as <strong>{displayName}</strong>
+            </p>
+            <button
+              onClick={handleLogout}
+              style={{ backgroundColor: 'var(--surface-color)', color: 'var(--text-muted)', border: '1px solid var(--border-color)', padding: '8px 16px', fontSize: '0.9rem' }}>
+              Disconnect Spotify
+            </button>
+          </>
         )}
       </div>
 
