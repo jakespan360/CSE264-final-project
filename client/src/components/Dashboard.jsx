@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { generatePlaylist } from '../services/spotify';
+import { generatePlaylist, saveGeneratedPlaylist } from '../services/spotify';
 
 export default function Dashboard() {
   const [session, setSession] = useState(null);
@@ -8,6 +8,8 @@ export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [playlist, setPlaylist] = useState([]);
   const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
 
   // Listen for Supabase auth changes
   useEffect(() => {
@@ -27,6 +29,7 @@ export default function Dashboard() {
       provider: 'spotify',
       options: {
         scopes: 'user-read-email user-read-private playlist-modify-public playlist-modify-private',
+        queryParams: { show_dialog: 'true' },
       },
     });
   };
@@ -50,6 +53,22 @@ export default function Dashboard() {
       setError('Could not generate playlist. Try again.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!playlist.length) return;
+    setIsSaving(true);
+    setError('');
+    setSaveMessage('');
+
+    try {
+      const result = await saveGeneratedPlaylist(`Mood Playlist - ${mood}`, playlist);
+      setSaveMessage(`Saved! Open: ${result.url}`);
+    } catch (err) {
+      setError(err.message || 'Could not save playlist.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -104,6 +123,15 @@ export default function Dashboard() {
                   </li>
                 ))}
               </ul>
+
+              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                <button onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Save to Spotify'}
+                </button>
+                {saveMessage && (
+                  <p style={{ marginTop: '0.75rem', wordBreak: 'break-word' }}>{saveMessage}</p>
+                )}
+              </div>
             </div>
           )}
         </div>

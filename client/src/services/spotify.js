@@ -132,3 +132,30 @@ export async function generatePlaylist(mood) {
   const data = await res.json();
   return data.playlist;
 }
+
+/**
+ * Saves a generated playlist to the user's account.
+ * @param {string} name - The name of the playlist.
+ * @param {string[]} tracks - An array of Spotify track URIs.
+ * @returns {Promise<Object>} The saved playlist data.
+ * @throws {Error} If the save fails.
+ */
+export async function saveGeneratedPlaylist(name, tracks) {
+  const headers = await getHeaders(true);
+  const uris = (tracks || [])
+    .map((t) => t?.uri)
+    .filter(Boolean);
+
+  const res = await fetch(`${BASE_URL}/api/playlists/save`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ name, uris }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to save playlist');
+  }
+
+  return data; // { playlistId, url, snapshotIds }
+}
