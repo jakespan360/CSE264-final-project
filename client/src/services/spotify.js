@@ -159,6 +159,13 @@ export async function generatePlaylist(mood) {
  * @returns {Promise<Object>} The saved playlist data.
  * @throws {Error} If the save fails.
  */
+export async function getPlaylistHistory() {
+  const res = await fetch(`${BASE_URL}/api/playlists/history`);
+  if (!res.ok) throw new Error('Failed to fetch playlist history');
+  const data = await res.json();
+  return data.playlists;
+}
+
 export async function saveGeneratedPlaylist(name, tracks) {
   const headers = await getHeaders(true);
   const uris = (tracks || [])
@@ -168,7 +175,7 @@ export async function saveGeneratedPlaylist(name, tracks) {
   const res = await fetch(`${BASE_URL}/api/playlists/save`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ name, uris }),
+    body: JSON.stringify({ name, uris, tracks }),
   });
 
   const data = await res.json().catch(() => ({}));

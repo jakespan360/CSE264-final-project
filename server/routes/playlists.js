@@ -1,7 +1,7 @@
 import express from 'express';
 import { generatePlaylistFromMood } from '../services/geminiServices.js';
-import { searchTrack, getSpotifyProfile, createPlaylist, addTracksToPlaylist } from '../services/spotifyServices.js';
-import { savePlaylist, getUserPlaylists } from '../services/db/postgres.js';
+import { searchTrack, createPlaylist, addTracksToPlaylist } from '../services/spotifyServices.js';
+import { savePlaylist, getAllPlaylists } from '../services/db/postgres.js';
 
 const router = express.Router();
 
@@ -18,13 +18,18 @@ router.post('/generate', async (req, res) => {
     if (!token) return res.status(401).json({ error: 'Not authenticated' });
 
     const rawSongs = await generatePlaylistFromMood(req.body.mood);
-    
-    const enrichedTracks = [];
-    for (const song of rawSongs) {
-      const trackData = await searchTrack(`${song.title} ${song.artist}`, token);
-      if (trackData) enrichedTracks.push({ ...song, uri: trackData.uri, imageUrl: trackData.imageUrl, spotifyUrl: trackData.external_urls.spotify });
-    }
-    
+
+    const results = await Promise.all(
+      rawSongs.map((song) => searchTrack(`${song.title} ${song.artist}`, token))
+    );
+    const enrichedTracks = rawSongs
+      .map((song, i) => {
+        const trackData = results[i];
+        if (!trackData) return null;
+        return { ...song, uri: trackData.uri, imageUrl: trackData.imageUrl, spotifyUrl: trackData.external_urls.spotify };
+      })
+      .filter(Boolean);
+
     res.json({ playlist: enrichedTracks });
   } catch (error) {
     res.status(500).json({ error: 'Generation failed' });
@@ -37,7 +42,7 @@ router.post('/save', async (req, res) => {
     const token = getToken(req);
     if (!token) return res.status(401).json({ error: 'Not authenticated' });
 
-    const { name, uris, position } = req.body;
+    const { name, uris, tracks } = req.body;
 
     if (!Array.isArray(uris) || uris.length === 0) {
       return res.status(400).json({ error: 'uris must be a non-empty array' });
@@ -49,7 +54,13 @@ router.post('/save', async (req, res) => {
     }
 
     const playlist = await createPlaylist(null, name || 'Mood Playlist', token);
-    const addResult = await addTracksToPlaylist(playlist.id, cleanedUris, token, position);
+    const addResult = await addTracksToPlaylist(playlist.id, cleanedUris, token);
+
+    savePlaylist({
+      playlistName: name || 'Mood Playlist',
+      spotifyPlaylistUrl: playlist.external_urls?.spotify || '',
+      songs: tracks || [],
+    }).catch((err) => console.error('[DB savePlaylist]', err.message));
 
     res.status(201).json({
       playlistId: playlist.id,
@@ -65,15 +76,10 @@ router.post('/save', async (req, res) => {
   }
 });
 
-// 2.3 Get user's playlist history
-router.get('/history', async (req, res) => {
+// 2.3 Get all playlist history (admin)
+router.get('/history', async (_req, res) => {
   try {
-    const token = getToken(req);
-    if (!token) return res.status(401).json({ error: 'Not authenticated' });
-
-    const user = await getSpotifyProfile(token);
-    const playlists = await getUserPlaylists(user.id);
-
+    const playlists = await getAllPlaylists();
     res.json({ playlists });
   } catch (error) {
     console.error('History error:', error);
