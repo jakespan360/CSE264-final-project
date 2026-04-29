@@ -54,8 +54,7 @@ export default function Dashboard() {
     setIsGenerating(true);
     setError('');
     setPlaylist([]);
-    setSavedUrl('');
-    setSaveError('');
+    setSaveMessage('');
 
     try {
       const generated = await generatePlaylist(mood);

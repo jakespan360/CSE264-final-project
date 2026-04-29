@@ -15,6 +15,7 @@ export default function Navigation() {
     <nav style={{ padding: '1rem', borderBottom: '1px solid #ccc', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
       <Link to="/" style={pillStyleButton}>Home</Link>
       <Link to="/dashboard" style={pillStyleButton}>Dashboard</Link>
+      <Link to="/history" style={pillStyleButton}>History</Link>
       <Link to="/admin" style={pillStyleButton}>Admin</Link>
     </nav>
   );
