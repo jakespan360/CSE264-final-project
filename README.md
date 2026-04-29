@@ -33,7 +33,7 @@ The generated playlist can be saved directly to the user's Spotify account as a 
 Logged-in users can view all playlists they've previously generated via the History tab. Each entry shows the playlist name, date created, song count, and a link to open it in Spotify.
 
 ### Admin Panel
-A password-protected admin panel displays all playlists generated across all users, using the same card layout as the History tab. Access requires a password set via environment variable (or "admin" as default")
+A password-protected admin panel displays all playlists generated across all users, using the same card layout as the History tab. Access requires a password set via environment variable (or "admin" as default"), password is admin for admin access.
 
 ### PostgreSQL Persistence
 Every saved playlist is persisted to a PostgreSQL database on Supabase, storing the playlist name, Spotify URL, song data, and the Spotify user ID of the creator.
@@ -47,7 +47,7 @@ Every saved playlist is persisted to a PostgreSQL database on Supabase, storing 
 - PostgreSQL (local) or a Supabase project
 - A Spotify Developer app
 - A Supabase project (for OAuth)
-- A Groq API key
+- A Gemini App API key
 
 ### 1. Clone the repository
 ```
@@ -60,22 +60,62 @@ cd CSE264-final-project
 npm --prefix server install
 npm --prefix client install
 ```
+### 3. Create environment variable files
+ 
+Create `server/.env`
+Create `client/.env`
 
-### 3. Configure environment variables
+### 4. Create  & Setup Supabase instance 
+- Navigate to https://supabase.com/ create a new project instance
+- Go to the project overview page, top of left side bar, where the name of the project is listed there will be a dropdown to copy. Copy the project url and publishable key to the client/.env file with the variable name below they should look like this:
+    - VITE_SUPABASE_URL="your_key"
+    - VITE_SUPABASE_ANON_KEY="your_key"
+- Click Connect button while inside Supabase project
+- Install packages as shown in instructions inside terminal
+- Add the follow to your server/.env file
+    NEXT_PUBLIC_SUPABASE_URL="your key"
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="your key"
 
-Create `server/.env`:
+### 5. Create Spotify Developer App
+- go to https://developer.spotify.com/ login to your spotify account and hit create app
+- make sure Web API is checked so that the correct routes can be used
+- you will need the client id and client secret to connect Supabase & Spotify
+- Also click on the User Management tab in the spotify developer and add your name and spotify account email so that your account has permissions to the app
+
+### 6. Link Spotify & Supabase
+- Navigate to your Supabase project instance, go to the authentication page on the left sidebar
+- click sign in/providers, turn off confirm email
+- scroll down through auth providers to the Spotify Auth provider
+- Enable the Spotify connector, and copy and paste the client id and client secret you got from the spotify developer dashboard to this connector
+- lastly copy and paste the callback url for OAuth on this page back to your spotify developer dashboard under the Redirect URIs location.
+
+### 7. Create Google AI Studio Application 
+- Navigate to Google AI Studio https://aistudio.google.com/ and create a new project and an API key
+- After creating a new project and key go to the API keys tab, under the "key" column click the link that is displayed by your project and copy the API key to server/.env
+- it should look like this: GEMINI_API_KEY="your_key"
+
+### 8. DB SETUP
+
+
+### 9. Validate .env files layout
+
+Client/.env should look like this:
 ```
-DATABASE_URL=postgresql://localhost:5432/playlists
-GROQ_API_KEY=your_groq_api_key
-PORT=3000
+VITE_SUPABASE_URL="your_key"
+VITE_SUPABASE_ANON_KEY="your_key"
 ```
 
-Create `client/.env`:
+Server/.env should look like this:
 ```
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_ADMIN_PASSWORD=your_admin_password
+GEMINI_API_KEY="your_key"
+
+NEXT_PUBLIC_SUPABASE_URL="your_key"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="your_key"
+
+DATABASE_URL="db_url"
 ```
+
+
 
 ### 4. Set up the database
 
