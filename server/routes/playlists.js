@@ -1,5 +1,5 @@
 import express from 'express';
-import { generatePlaylistFromMood } from '../services/geminiServices.js';
+import { generatePlaylistFromMood } from '../services/aiServices.js';
 import { searchTrack, getSpotifyProfile, createPlaylist, addTracksToPlaylist } from '../services/spotifyServices.js';
 import { savePlaylist, getUserPlaylists, getAllPlaylists } from '../services/db/postgres.js';
 
@@ -11,7 +11,7 @@ function getToken(req) {
   return authHeader.split(' ')[1];
 }
 
-// Generate (Gemini + Spotify Search)
+// Generate (AI + Spotify Search)
 router.post('/generate', async (req, res) => {
   try {
     const token = getToken(req);
