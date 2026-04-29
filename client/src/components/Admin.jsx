@@ -3,21 +3,6 @@ import { getPlaylistHistory } from '../services/spotify';
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin';
 
-const thStyle = {
-  textAlign: 'left',
-  padding: '10px 12px',
-  borderBottom: '2px solid #333',
-  color: '#b3b3b3',
-  fontSize: '0.85rem',
-  textTransform: 'uppercase',
-};
-const tdStyle = {
-  padding: '10px 12px',
-  borderBottom: '1px solid #282828',
-  verticalAlign: 'top',
-  color: '#fff',
-};
-
 export default function Admin() {
   const [authed, setAuthed] = useState(false);
   const [password, setPassword] = useState('');
@@ -65,46 +50,55 @@ export default function Admin() {
   }
 
   return (
-    <div>
+    <div style={{ width: '100%', maxWidth: '700px', margin: '0 auto' }}>
       <h2>Admin Panel</h2>
       {fetchError && <p style={{ color: 'red' }}>{fetchError}</p>}
       {loading ? (
         <p>Loading...</p>
+      ) : playlists.length === 0 ? (
+        <p style={{ color: '#b3b3b3', marginTop: '2rem', textAlign: 'center' }}>No playlists yet</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
-          <thead>
-            <tr>
-              <th style={thStyle}>ID</th>
-              <th style={thStyle}>Playlist Name</th>
-              <th style={thStyle}>Spotify Playlist</th>
-              <th style={thStyle}>Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {playlists.length === 0 ? (
-              <tr>
-                <td colSpan={4} style={{ ...tdStyle, textAlign: 'center', color: '#666', padding: '2rem' }}>
-                  No playlists yet
-                </td>
-              </tr>
-            ) : (
-              playlists.map((p) => (
-                <tr key={p.id}>
-                  <td style={{ ...tdStyle, fontSize: '0.75rem', color: '#666' }}>{p.id}</td>
-                  <td style={{ ...tdStyle, color: '#b3b3b3' }}>{p.playlist_name}</td>
-                  <td style={tdStyle}>
-                    {p.spotify_playlist_url ? (
-                      <a href={p.spotify_playlist_url} target="_blank" rel="noreferrer" style={{ color: '#1db954' }}>
-                        Open in Spotify
-                      </a>
-                    ) : '—'}
-                  </td>
-                  <td style={{ ...tdStyle, color: '#b3b3b3' }}>{new Date(p.created_at).toLocaleString()}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '1rem' }}>
+          {playlists.map((p) => (
+            <div key={p.id} style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '14px 18px',
+              backgroundColor: '#121212',
+              border: '1px solid #282828',
+              borderRadius: '8px',
+            }}>
+              <div>
+                <div style={{ fontWeight: '600', color: '#fff' }}>{p.playlist_name}</div>
+                <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>
+                  {new Date(p.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                  {' · '}
+                  {Array.isArray(p.songs) ? p.songs.length : 0} songs
+                  {' · '}
+                  {p.spotify_user_id}
+                </div>
+              </div>
+              {p.spotify_playlist_url && (
+                <a
+                  href={p.spotify_playlist_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    color: '#1db954',
+                    fontWeight: '600',
+                    fontSize: '0.9rem',
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                    marginLeft: '1rem',
+                  }}
+                >
+                  Open in Spotify
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
