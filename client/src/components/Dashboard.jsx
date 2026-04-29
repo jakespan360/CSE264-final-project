@@ -74,7 +74,7 @@ export default function Dashboard() {
 
     try {
       const result = await saveGeneratedPlaylist(`Mood Playlist - ${mood}`, playlist);
-      setSaveMessage(`Saved! Open: ${result.url}`);
+      setSaveMessage(result.url);
     } catch (err) {
       setError(err.message || 'Could not save playlist.');
     } finally {
@@ -133,11 +133,13 @@ export default function Dashboard() {
               <PlaylistDisplay tracks={playlist} />
 
               <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                <button onClick={handleSave} disabled={isSaving}>
-                  {isSaving ? 'Saving...' : 'Save to Spotify'}
+                <button onClick={handleSave} disabled={isSaving || !!saveMessage}>
+                  {isSaving ? 'Saving...' : saveMessage ? 'Saved!' : 'Save to Spotify'}
                 </button>
                 {saveMessage && (
-                  <p style={{ marginTop: '0.75rem', wordBreak: 'break-word' }}>{saveMessage}</p>
+                  <button onClick={() => window.open(saveMessage, '_blank')} style={{ marginTop: '0.75rem' }}>
+                    View Playlist
+                  </button>
                 )}
               </div>
             </div>
