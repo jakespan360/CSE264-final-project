@@ -17,7 +17,14 @@ router.post('/generate', async (req, res) => {
     const token = getToken(req);
     if (!token) return res.status(401).json({ error: 'Not authenticated' });
 
-    const rawSongs = await generatePlaylistFromMood(req.body.mood);
+    const { mood } = req.body;
+    if (!mood || !mood.trim()) {
+      return res.status(400).json({ error: 'Mood is required' });
+    }
+
+    console.log('[Generate] Processing mood:', mood);
+    const rawSongs = await generatePlaylistFromMood(mood);
+    console.log('[Generate] Got songs:', rawSongs.length);
 
     const results = await Promise.all(
       rawSongs.map((song) => searchTrack(`${song.title} ${song.artist}`, token))
@@ -35,9 +42,14 @@ router.post('/generate', async (req, res) => {
       })
       .filter(Boolean);
 
+    console.log('[Generate] Enriched tracks:', enrichedTracks.length);
     res.json({ playlist: enrichedTracks });
   } catch (error) {
-    res.status(500).json({ error: 'Generation failed' });
+    console.error('[POST /api/playlists/generate]', error);
+    res.status(500).json({ 
+      error: error.message || 'Generation failed',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

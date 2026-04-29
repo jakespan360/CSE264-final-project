@@ -13,7 +13,7 @@ The goal is to remove the friction of manually searching for music by turning a 
 | Name | Role |
 |------|------|
 | Jacob Spangler (jds327@lehigh.edu)| Backend |
-| Andrew Todaro (email)| Full Stack |
+| Andrew Todaro (apt226@lehigh.edu)| Full Stack |
 | Nathan Ambrosino (email) | UI/UX |
 
 ---
