@@ -120,7 +120,7 @@ export default function Dashboard() {
               disabled={isGenerating}
               style={{ textAlign: 'center' }}
             />
-            <button type="submit" disabled={isGenerating || !mood.trim()} style={{ marginTop: '0.5rem', alignItems: 'center' }}>
+            <button type="submit" disabled={isGenerating || !mood.trim()} style={{ display: 'block', margin: '0.5rem auto 0' }}>
               {isGenerating ? 'Generating...' : 'Generate'}
             </button>
           </form>
