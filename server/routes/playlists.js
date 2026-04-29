@@ -1,7 +1,7 @@
 import express from 'express';
 import { generatePlaylistFromMood } from '../services/geminiServices.js';
-import { searchTrack, createPlaylist, addTracksToPlaylist } from '../services/spotifyServices.js';
-import { savePlaylist, getAllPlaylists } from '../services/db/postgres.js';
+import { searchTrack, getSpotifyProfile, createPlaylist, addTracksToPlaylist } from '../services/spotifyServices.js';
+import { savePlaylist, getUserPlaylists, getAllPlaylists } from '../services/db/postgres.js';
 
 const router = express.Router();
 
@@ -11,7 +11,7 @@ function getToken(req) {
   return authHeader.split(' ')[1];
 }
 
-// 1.3 Generate (Gemini + Spotify Search)
+// Generate (Gemini + Spotify Search)
 router.post('/generate', async (req, res) => {
   try {
     const token = getToken(req);
@@ -36,7 +36,7 @@ router.post('/generate', async (req, res) => {
   }
 });
 
-// 1.4 Save Playlist to Spotify + persist to DB
+// Save playlist to Spotify + persist to DB
 router.post('/save', async (req, res) => {
   try {
     const token = getToken(req);
@@ -53,10 +53,14 @@ router.post('/save', async (req, res) => {
       return res.status(400).json({ error: 'No valid Spotify URIs provided' });
     }
 
-    const playlist = await createPlaylist(null, name || 'Mood Playlist', token);
+    const [user, playlist] = await Promise.all([
+      getSpotifyProfile(token),
+      createPlaylist(null, name || 'Mood Playlist', token),
+    ]);
     const addResult = await addTracksToPlaylist(playlist.id, cleanedUris, token);
 
     savePlaylist({
+      spotifyUserId: user.id,
       playlistName: name || 'Mood Playlist',
       spotifyPlaylistUrl: playlist.external_urls?.spotify || '',
       songs: tracks || [],
@@ -76,7 +80,22 @@ router.post('/save', async (req, res) => {
   }
 });
 
-// 2.3 Get all playlist history (admin)
+// Get current user's playlists
+router.get('/mine', async (req, res) => {
+  try {
+    const token = getToken(req);
+    if (!token) return res.status(401).json({ error: 'Not authenticated' });
+
+    const user = await getSpotifyProfile(token);
+    const playlists = await getUserPlaylists(user.id);
+    res.json({ playlists });
+  } catch (error) {
+    console.error('Mine error:', error);
+    res.status(500).json({ error: 'Failed to fetch playlists' });
+  }
+});
+
+// Get all playlists (admin)
 router.get('/history', async (_req, res) => {
   try {
     const playlists = await getAllPlaylists();

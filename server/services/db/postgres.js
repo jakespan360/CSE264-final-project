@@ -7,14 +7,22 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-export async function savePlaylist({ playlistName, spotifyPlaylistUrl, songs }) {
+export async function savePlaylist({ spotifyUserId, playlistName, spotifyPlaylistUrl, songs }) {
   const { rows } = await pool.query(
-    `INSERT INTO playlists (playlist_name, spotify_playlist_url, songs)
-     VALUES ($1, $2, $3)
+    `INSERT INTO playlists (spotify_user_id, playlist_name, spotify_playlist_url, songs)
+     VALUES ($1, $2, $3, $4)
      RETURNING *`,
-    [playlistName, spotifyPlaylistUrl, JSON.stringify(songs)]
+    [spotifyUserId, playlistName, spotifyPlaylistUrl, JSON.stringify(songs)]
   );
   return rows[0];
+}
+
+export async function getUserPlaylists(spotifyUserId) {
+  const { rows } = await pool.query(
+    `SELECT * FROM playlists WHERE spotify_user_id = $1 ORDER BY created_at DESC`,
+    [spotifyUserId]
+  );
+  return rows;
 }
 
 export async function getAllPlaylists() {

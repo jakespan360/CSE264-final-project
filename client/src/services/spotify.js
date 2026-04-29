@@ -166,6 +166,14 @@ export async function getPlaylistHistory() {
   return data.playlists;
 }
 
+export async function getUserPlaylists() {
+  const headers = await getHeaders();
+  const res = await fetch(`${BASE_URL}/api/playlists/mine`, { headers });
+  if (!res.ok) throw new Error('Failed to fetch your playlists');
+  const data = await res.json();
+  return data.playlists;
+}
+
 export async function saveGeneratedPlaylist(name, tracks) {
   const headers = await getHeaders(true);
   const uris = (tracks || [])
