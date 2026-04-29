@@ -22,11 +22,16 @@ router.post('/generate', async (req, res) => {
     const results = await Promise.all(
       rawSongs.map((song) => searchTrack(`${song.title} ${song.artist}`, token))
     );
-    const enrichedTracks = rawSongs
-      .map((song, i) => {
-        const trackData = results[i];
+    const enrichedTracks = results
+      .map((trackData) => {
         if (!trackData) return null;
-        return { ...song, uri: trackData.uri, imageUrl: trackData.imageUrl, spotifyUrl: trackData.external_urls.spotify };
+        return {
+          title: trackData.title,
+          artist: trackData.artist,
+          uri: trackData.uri,
+          imageUrl: trackData.imageUrl,
+          spotifyUrl: trackData.external_urls.spotify,
+        };
       })
       .filter(Boolean);
 

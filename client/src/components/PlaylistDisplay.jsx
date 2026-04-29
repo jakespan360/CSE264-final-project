@@ -22,7 +22,6 @@ export default function PlayListDisplay({ tracks }) {
           borderBottom: '1px solid #282828',
           gap: '16px'
         }}>
-          {/* THE IMAGE UPDATE */}
           <img 
             src={track.imageUrl || 'https://via.placeholder.com/50'} 
             alt={track.title}
