@@ -12,7 +12,7 @@ The goal is to remove the friction of manually searching for music by turning a 
 
 | Name | Role |
 |------|------|
-| Jacob | Backend |
+| Jacob Spangler (jds327@lehigh.edu)| Backend |
 | Andrew | Full Stack |
 | Nathan | UI/UX |
 
