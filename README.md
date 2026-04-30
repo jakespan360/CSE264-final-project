@@ -44,10 +44,9 @@ Every saved playlist is persisted to a PostgreSQL database on Supabase, storing 
 
 ### Prerequisites
 - Node.js v18+
-- PostgreSQL (local) or a Supabase project
+- Supabase project for DB and OAuth
 - A Spotify Developer app
-- A Supabase project (for OAuth)
-- A Groq API key
+- A Gemini API key
 
 ### 1. Clone the repository
 ```
@@ -65,8 +64,8 @@ npm --prefix client install
 
 Create `server/.env`:
 ```
-DATABASE_URL=postgresql://localhost:5432/playlists
-GROQ_API_KEY=your_groq_api_key
+DATABASE_URL=your_transaction_pooler_connection_string 
+GEMINI_API_KEY=your_gemini_api_key
 PORT=3000
 ```
 
@@ -79,15 +78,9 @@ VITE_ADMIN_PASSWORD=your_admin_password
 
 ### 4. Set up the database
 
-**Local PostgreSQL:**
-```
-createdb playlists
-psql playlists -f server/services/db/migration.sql
-```
-
 **Supabase:**
 Run the contents of `server/services/db/migration.sql` in the Supabase SQL editor (Dashboard → SQL Editor).
-If using Supabase, set `DATABASE_URL` to the Transaction pooler connection string (Settings → Database → Connection pooling → Transaction mode).
+Set `DATABASE_URL` to the Transaction pooler connection string (Settings → Database → Connection pooling → Transaction mode).
 
 ### 5. Run the app
 ```
@@ -102,8 +95,8 @@ The client runs at `http://localhost:5173` and the server at `http://localhost:3
 
 | Variable | Location | Description |
 |----------|----------|-------------|
-| `DATABASE_URL` | `server/.env` | PostgreSQL connection string (local or Supabase Transaction pooler) |
-| `GROQ_API_KEY` | `server/.env` | Groq API key for AI playlist generation — [console.groq.com](https://console.groq.com) |
+| `DATABASE_URL` | `server/.env` | PostgreSQL connection string (Supabase Transaction pooler) |
+| `GEMINI_API_KEY` | `server/.env` | Gemini API key for AI playlist generation |
 | `VITE_SUPABASE_URL` | `client/.env` | Supabase project URL — found in Supabase Dashboard → Settings → API |
 | `VITE_SUPABASE_ANON_KEY` | `client/.env` | Supabase anon/public key — same location as above |
 | `VITE_ADMIN_PASSWORD` | `client/.env` | Password to access the admin panel (defaults to `admin` if not set) |
@@ -113,9 +106,3 @@ Spotify login is handled through Supabase Auth. To configure it:
 1. Create a Spotify Developer app at [developer.spotify.com](https://developer.spotify.com)
 2. Add `https://<your-supabase-project>.supabase.co/auth/v1/callback` as a Redirect URI in the Spotify app settings
 3. In Supabase Dashboard → Authentication → Providers → Spotify, enter your Spotify Client ID and Client Secret
-
-### Resetting the database
-```
-psql playlists -c "DROP TABLE IF EXISTS playlists;"
-psql playlists -f server/services/db/migration.sql
-```
