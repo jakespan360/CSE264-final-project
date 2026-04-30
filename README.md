@@ -24,7 +24,7 @@ The goal is to remove the friction of manually searching for music by turning a 
 Users connect their Spotify account via Supabase OAuth. This grants the app permission to read the user's profile and create playlists on their behalf.
 
 ### AI Playlist Generation
-A mood or vibe entered by the user is sent to the Groq API (using `llama-3.3-70b-versatile`) which returns a JSON array of 15 song recommendations. Each song is then searched on the Spotify API to retrieve its URI, album art, and metadata.
+A mood or vibe entered by the user is sent to the Gemini API which returns a JSON array of 15 song recommendations. Each song is then searched on the Spotify API to retrieve its URI, album art, and metadata.
 
 ### Save to Spotify
 The generated playlist can be saved directly to the user's Spotify account as a new private playlist, viewable immediately in their Spotify library.
