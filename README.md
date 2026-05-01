@@ -14,7 +14,7 @@ The goal is to remove the friction of manually searching for music by turning a 
 |------|------|
 | Jacob Spangler (jds327@lehigh.edu)| Backend |
 | Andrew Todaro (apt226@lehigh.edu)| Full Stack |
-| Nathan Ambrosino (email) | UI/UX |
+| Nathan Ambrosino (nca227@lehigh.edu) | UI/UX |
 
 ---
 
@@ -93,48 +93,38 @@ Create `client/.env`
 - After creating a new project and key go to the API keys tab, under the "key" column click the link that is displayed by your project and copy the API key to server/.env
 - it should look like this: GEMINI_API_KEY="your_key"
 
-### 8. DB SETUP
+### 8. Set Up the Database
 
+Navigate to your Supabase project dashboard, open the SQL Editor from the left sidebar, and run the contents of `server/services/db/migration.sql`. This will create all required tables.
 
-### 9. Validate .env files layout
+Next, get your database connection string: go to **Settings → Database → Connection pooling** and copy the **Transaction mode** connection string. Add it to `server/.env` as `DATABASE_URL`.
 
-Client/.env should look like this:
+---
 
-### 3. Configure environment variables
+### 9. Validate Environment Files
 
-Create `server/.env`:
-```
-DATABASE_URL=your_transaction_pooler_connection_string 
-GEMINI_API_KEY=your_gemini_api_key
-PORT=3000
-```
+Confirm your environment files match the following before running the app.
 
-Create `client/.env`:
-```
+`client/.env`:
+```env
 VITE_SUPABASE_URL="your_key"
 VITE_SUPABASE_ANON_KEY="your_key"
+VITE_ADMIN_PASSWORD="your_admin_password" (optional, default = "admin")
 ```
 
-Server/.env should look like this:
-```
+`server/.env`:
+```env
+DATABASE_URL="your_transaction_pooler_connection_string"
 GEMINI_API_KEY="your_key"
-
 NEXT_PUBLIC_SUPABASE_URL="your_key"
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="your_key"
-
-DATABASE_URL="db_url"
 ```
 
+---
 
+### 10. Run the App
 
-### 4. Set up the database
-
-**Supabase:**
-Run the contents of `server/services/db/migration.sql` in the Supabase SQL editor (Dashboard → SQL Editor).
-Set `DATABASE_URL` to the Transaction pooler connection string (Settings → Database → Connection pooling → Transaction mode).
-
-### 5. Run the app
-```
+```bash
 npx concurrently "npm --prefix server run dev" "npm --prefix client run dev"
 ```
 
@@ -148,12 +138,16 @@ The client runs at `http://localhost:5173` and the server at `http://localhost:3
 |----------|----------|-------------|
 | `DATABASE_URL` | `server/.env` | PostgreSQL connection string (Supabase Transaction pooler) |
 | `GEMINI_API_KEY` | `server/.env` | Gemini API key for AI playlist generation |
-| `VITE_SUPABASE_URL` | `client/.env` | Supabase project URL — found in Supabase Dashboard → Settings → API |
+| `NEXT_PUBLIC_SUPABASE_URL` | `server/.env` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `server/.env` | Supabase publishable key |
+| `VITE_SUPABASE_URL` | `client/.env` | Supabase project URL — found in Dashboard → Settings → API |
 | `VITE_SUPABASE_ANON_KEY` | `client/.env` | Supabase anon/public key — same location as above |
 | `VITE_ADMIN_PASSWORD` | `client/.env` | Password to access the admin panel (defaults to `admin` if not set) |
 
 ### Spotify OAuth via Supabase
+
 Spotify login is handled through Supabase Auth. To configure it:
+
 1. Create a Spotify Developer app at [developer.spotify.com](https://developer.spotify.com)
 2. Add `https://<your-supabase-project>.supabase.co/auth/v1/callback` as a Redirect URI in the Spotify app settings
-3. In Supabase Dashboard → Authentication → Providers → Spotify, enter your Spotify Client ID and Client Secret
+3. In Supabase Dashboard → **Authentication → Providers → Spotify**, enter your Spotify Client ID and Client Secret
