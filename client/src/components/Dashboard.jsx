@@ -54,6 +54,7 @@ export default function Dashboard() {
     setIsGenerating(true);
     setError('');
     setPlaylist([]);
+    setSaveMessage('');
 
     try {
       const generated = await generatePlaylist(mood);
@@ -73,7 +74,7 @@ export default function Dashboard() {
 
     try {
       const result = await saveGeneratedPlaylist(`Mood Playlist - ${mood}`, playlist);
-      setSaveMessage(`Saved! Open: ${result.url}`);
+      setSaveMessage(result.url);
     } catch (err) {
       setError(err.message || 'Could not save playlist.');
     } finally {
@@ -119,23 +120,26 @@ export default function Dashboard() {
               disabled={isGenerating}
               style={{ textAlign: 'center' }}
             />
-            <button type="submit" disabled={isGenerating || !mood.trim()} style={{ marginTop: '0.5rem', alignItems: 'center' }}>
+            <button type="submit" disabled={isGenerating || !mood.trim()} style={{ display: 'block', margin: '0.5rem auto 0' }}>
               {isGenerating ? 'Generating...' : 'Generate'}
             </button>
           </form>
 
           {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
 
+          {/* FIX: Wrapped sibling elements in a Fragment <> </> */}
           {playlist.length > 0 && (
             <div style={{ marginTop: '2rem' }}>
               <PlaylistDisplay tracks={playlist} />
 
               <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                <button onClick={handleSave} disabled={isSaving}>
-                  {isSaving ? 'Saving...' : 'Save to Spotify'}
+                <button onClick={handleSave} disabled={isSaving || !!saveMessage}>
+                  {isSaving ? 'Saving...' : saveMessage ? 'Saved!' : 'Save to Spotify'}
                 </button>
                 {saveMessage && (
-                  <p style={{ marginTop: '0.75rem', wordBreak: 'break-word' }}>{saveMessage}</p>
+                  <button onClick={() => window.open(saveMessage, '_blank')} style={{ marginTop: '0.75rem' }}>
+                    View Playlist
+                  </button>
                 )}
               </div>
             </div>

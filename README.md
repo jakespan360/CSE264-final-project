@@ -25,7 +25,6 @@ Users connect their Spotify account via Supabase OAuth. This grants the app perm
 
 ### AI Playlist Generation
 A mood or vibe entered by the user is sent to the Gemini API (using the model gemini-3-flash-preview) which returns a JSON array of 15 song recommendations. Each song is then searched on the Spotify API to retrieve its URI, album art, and metadata.
-A mood or vibe entered by the user is sent to the Gemini API which returns a JSON array of 15 song recommendations. Each song is then searched on the Spotify API to retrieve its URI, album art, and metadata.
 
 ### Save to Spotify
 The generated playlist can be saved directly to the user's Spotify account as a new private playlist, viewable immediately in their Spotify library.
@@ -47,8 +46,6 @@ Every saved playlist is persisted to a PostgreSQL database on Supabase, storing 
 - Node.js v18+
 - Supabase project for DB and OAuth
 - A Spotify Developer app
-- A Supabase project (for OAuth)
-- A Gemini App API key
 - A Gemini API key
 
 ### 1. Clone the repository

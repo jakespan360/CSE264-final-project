@@ -116,6 +116,25 @@ export async function addTracksToPlaylist(playlistId, trackUris) {
 }
 
 /**
+ * Saves a generated playlist to the user's Spotify account.
+ * @param {string} name - The playlist name.
+ * @param {string[]} uris - Array of Spotify track URIs to add.
+ * @returns {Promise<string>} The Spotify URL of the created playlist.
+ * @throws {Error} If saving fails.
+ */
+export async function savePlaylist(name, uris) {
+  const headers = await getHeaders(true);
+  const res = await fetch(`${BASE_URL}/api/playlists/save`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ name, uris }),
+  });
+  if (!res.ok) throw new Error('Failed to save playlist to Spotify');
+  const data = await res.json();
+  return data.url;
+}
+
+/**
  * Generates a playlist based on a given mood.
  * @param {string} mood - The mood to generate the playlist for.
  * @returns {Promise<string>} The generated playlist's ID.
@@ -140,6 +159,21 @@ export async function generatePlaylist(mood) {
  * @returns {Promise<Object>} The saved playlist data.
  * @throws {Error} If the save fails.
  */
+export async function getPlaylistHistory() {
+  const res = await fetch(`${BASE_URL}/api/playlists/history`);
+  if (!res.ok) throw new Error('Failed to fetch playlist history');
+  const data = await res.json();
+  return data.playlists;
+}
+
+export async function getUserPlaylists() {
+  const headers = await getHeaders();
+  const res = await fetch(`${BASE_URL}/api/playlists/mine`, { headers });
+  if (!res.ok) throw new Error('Failed to fetch your playlists');
+  const data = await res.json();
+  return data.playlists;
+}
+
 export async function saveGeneratedPlaylist(name, tracks) {
   const headers = await getHeaders(true);
   const uris = (tracks || [])
@@ -149,7 +183,7 @@ export async function saveGeneratedPlaylist(name, tracks) {
   const res = await fetch(`${BASE_URL}/api/playlists/save`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ name, uris }),
+    body: JSON.stringify({ name, uris, tracks }),
   });
 
   const data = await res.json().catch(() => ({}));
