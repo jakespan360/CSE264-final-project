@@ -46,8 +46,7 @@ Every saved playlist is persisted to a PostgreSQL database on Supabase, storing 
 - Node.js v18+
 - Supabase project for DB and OAuth
 - A Spotify Developer app
-- A Supabase project (for OAuth)
-- A Gemini App API key
+- A Gemini API key
 
 ### 1. Clone the repository
 ```
@@ -100,6 +99,17 @@ Create `client/.env`
 ### 9. Validate .env files layout
 
 Client/.env should look like this:
+
+### 3. Configure environment variables
+
+Create `server/.env`:
+```
+DATABASE_URL=your_transaction_pooler_connection_string 
+GEMINI_API_KEY=your_gemini_api_key
+PORT=3000
+```
+
+Create `client/.env`:
 ```
 VITE_SUPABASE_URL="your_key"
 VITE_SUPABASE_ANON_KEY="your_key"
